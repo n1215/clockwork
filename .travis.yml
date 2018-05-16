@@ -1,0 +1,30 @@
+sudo: false
+language: php
+php:
+  - 5.6
+  - 7.0
+  - 7.1
+  - 7.2
+matrix:
+    include:
+        - php: 7.1
+          env: DB=pgsql
+        - php: 7.1
+          env: DB=mysql
+
+cache:
+  directories:
+    - $HOME/.composer/cache
+
+before_script:
+  - sh -xe -c "if [ '$DB' = 'mysql' ]; then mysql -u root -e \"CREATE DATABASE testdb CHARACTER SET utf8;\"; fi"
+  - sh -xe -c "if [ '$DB' = 'mysql' ]; then mysql -u root -e \"GRANT ALL PRIVILEGES ON testdb.* TO testdb_user@localhost IDENTIFIED BY 'testdb_password';\"; fi"
+  - sh -xe -c "if [ '$DB' = 'pgsql' ]; then psql -U postgres -c \"CREATE USER testdb_user WITH PASSWORD 'testdb_password';\"; fi"
+  - sh -xe -c "if [ '$DB' = 'pgsql' ]; then psql -U postgres -c \"CREATE DATABASE testdb OWNER testdb_user ENCODING='utf8';\"; fi"
+  - composer self-update
+  - composer install
+script:
+  - composer test
+
+notifications:
+  email: false
